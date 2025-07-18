@@ -10,7 +10,20 @@ const authRoutes = require("./Routes/userRouter");
 dbConnect();
 
 // Middleware setup
-app.use(cors());
+const allowedOrigins = [
+    "https://blog-site-frontend-five.vercel.app",  // ✅ your frontend domain
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true, // if using cookies or authorization headers
+}));
 app.use(express.json());
 
 
