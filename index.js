@@ -8,6 +8,7 @@ const authRoutes = require("./Routes/userRouter");
 
 // Database connection
 dbConnect();
+
 // Middleware setup
 app.use(cors());
 app.use(express.json());
