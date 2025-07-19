@@ -4,7 +4,7 @@ const createPost = async (req, res) => {
     const { title, content } = req.body;
     const { role, id: userId } = req.user;
 
-    console.log("User role:", role);
+    // console.log("User role:", role);
     if (!["admin", "author"].includes(role)) {
         return res.status(403).json({ error: "Only authors or admins can create posts" });
     }
