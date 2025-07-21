@@ -9,10 +9,18 @@ const registerUser = async (req, res) => {
         });
         if (user) return res.status(400).send("User already registered");
 
+        const profilePicURL = req.file
+            ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+            : undefined;
+
+        console.log("Profile Picture URL: ", profilePicURL);
+        console.log("Request Body : ", req.body);
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
         await new User({
             ...req.body,
+            profilePicture: profilePicURL || req.body.profilePicture,
             password: hashedPassword
         }).save();
         res.status(201).send("User created successfully");
@@ -44,7 +52,12 @@ const loginUser = async (req, res) => {
             token,
             user: {
                 id: user._id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                datathOfBirth: user.datathOfBirth,
+                profilePicture: user.profilePicture,
                 username: user.username,
+                email: user.email,
                 role: "author"
             }
         });

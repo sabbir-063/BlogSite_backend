@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const path = require("path");
 const { dbConnect } = require("./DB/dbConnect");
 const authRoutes = require("./Routes/authRoutes");
 const postRoutes = require("./Routes/postRoutes");
@@ -12,7 +13,7 @@ dbConnect();
 // Middleware setup
 app.use(cors());
 app.use(express.json());
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes setup
 app.use("/api/auth", authRoutes);
