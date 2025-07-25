@@ -6,7 +6,7 @@ const path = require("path");
 const { dbConnect } = require("./DB/dbConnect");
 const authRoutes = require("./Routes/authRoutes");
 const postRoutes = require("./Routes/postRoutes");
-
+const userRoutes = require('./Routes/userRoutes');
 // Database connection
 dbConnect();
 
@@ -18,7 +18,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes setup
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
-
+app.use('/api/user', userRoutes);
 
 
 

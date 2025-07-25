@@ -66,8 +66,41 @@ const loginUser = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json("User not found");
+        const updatedData = { ...req.body };
+
+        if (req.file) {
+            updatedData.profilePicture = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        }
+        if (req.body.password) {
+            const salt = await bcrypt.genSalt(10);
+            updatedData.password = await bcrypt.hash(req.body.password, salt);
+        }
+        const updatedUser = await User.findByIdAndUpdate(req.user.id, updatedData, { new: true });
+        res.json({
+            message: "User updated successfully",
+            user: {
+                id: updatedUser._id,
+                firstname: updatedUser.firstname,
+                lastname: updatedUser.lastname,
+                datathOfBirth: updatedUser.datathOfBirth,
+                profilePicture: updatedUser.profilePicture,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                role: updatedUser.role
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }   
+}
+
 
 module.exports = {
     registerUser,  
-    loginUser
+    loginUser,
+    updateUser,
 };

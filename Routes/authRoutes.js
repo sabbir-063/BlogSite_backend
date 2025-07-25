@@ -8,4 +8,5 @@ router.post("/register", upload.single("profilePicture") , registerUser);
 // POST /api/auth/login
 router.post("/login", loginUser);
 
+
 module.exports = router;
