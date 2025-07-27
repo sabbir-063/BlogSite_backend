@@ -1,4 +1,6 @@
-const {Post} = require("../Models/Post");
+const { Post } = require("../Models/Post");
+const fs = require('fs');
+const path = require('path');
 
 const createPost = async (req, res) => {
     const { title, content } = req.body;
@@ -30,7 +32,7 @@ const getAllPosts = async (req, res) => {
     try {
         const posts = await Post.find()
             .populate("author", "firstname lastname username role profilePicture")
-            .sort({ createdAt: -1 }); 
+            .sort({ createdAt: -1 });
         // console.log("Fetched posts: ", posts);
         res.json(posts);
     } catch (err) {
@@ -44,7 +46,7 @@ const getPostById = async (req, res) => {
     try {
         const post = await Post.findById(id)
             .populate("author", "firstname lastname username role profilePicture");
-            // .populate("comments.author", "username role");
+        // .populate("comments.author", "username role");
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
@@ -58,6 +60,12 @@ const getPostById = async (req, res) => {
 const updatePost = async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
+    let keepImages = [];
+    try {
+        keepImages = JSON.parse(req.body.keepImages || '[]');
+    } catch {
+        keepImages = Array.isArray(req.body.keepImages) ? req.body.keepImages : [];
+    }
     const { role, id: userId } = req.user;
     if (!["admin", "author"].includes(role)) {
         return res.status(403).json({ error: "Only authors or admins can update posts" });
@@ -67,15 +75,32 @@ const updatePost = async (req, res) => {
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
-        if (post.author.toString() !== userId && role !== "admin") {
+        if (post.author.toString() !== userId) {
             return res.status(403).json({ error: "You are not authorized to update this post" });
         }
         post.title = title || post.title;
         post.content = content || post.content;
-        if (req.files && req.files.length > 0) {
-            const imageLinks = req.files.map(file => `${req.protocol}://${req.get("host")}/uploads/post-images/${file.filename}`);
-            post.imageLinks = [...post.imageLinks, ...imageLinks];
+        // Remove images not in keepImages
+        const imagesToDelete = post.imageLinks.filter(img => !keepImages.includes(img));
+        for (const imgUrl of imagesToDelete) {
+            const filename = imgUrl.split('/').pop();
+            const filePath = path.join(__dirname, '../uploads/post-images', filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
         }
+        // Keep only the images in keepImages
+        let updatedImageLinks = keepImages;
+        // Add new images if any
+        if (req.files && req.files.length > 0) {
+            const newImageLinks = req.files.map(file => `${req.protocol}://${req.get("host")}/uploads/post-images/${file.filename}`);
+            updatedImageLinks = [...updatedImageLinks, ...newImageLinks];
+        }
+        // Validation: at least one image must remain
+        if (updatedImageLinks.length === 0) {
+            return res.status(400).json({ error: "At least one image is required for a post." });
+        }
+        post.imageLinks = updatedImageLinks;
         await post.save();
         res.json(post);
     } catch (err) {
@@ -95,10 +120,10 @@ const deletePost = async (req, res) => {
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
-        if (post.author.toString() !== userId && role !== "admin") {
+        if (post.author.toString() !== userId) {
             return res.status(403).json({ error: "You are not authorized to delete this post" });
-        }   
-        await post.remove();
+        }
+        await Post.findByIdAndDelete(id);
         res.json({ message: "Post deleted successfully" });
     } catch (err) {
         console.error("Error deleting post:", err);
