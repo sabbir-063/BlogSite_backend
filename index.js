@@ -9,6 +9,11 @@ const postRoutes = require("./Routes/postRoutes");
 const userRoutes = require('./Routes/userRoutes');
 // Database connection
 dbConnect();
+corsOptions = {
+    origin: process.env.CLIENT_URL || "http://localhost:5000",
+    credentials: true,
+};
+app.use(cors(corsOptions));
 
 // Middleware setup
 app.use(cors());
