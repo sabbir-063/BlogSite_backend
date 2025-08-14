@@ -51,7 +51,6 @@ backend/
 - Blog post CRUD operations
 - Image upload functionality
 - User profile management
-- Input validation using Joi
 - Password hashing using bcrypt
 
 ## API Endpoints
@@ -103,29 +102,6 @@ The server will start on the configured port (default: 8080)
 - multer - File upload handling
 - cors - Cross-origin resource sharing
 - dotenv - Environment variable management
-- joi - Input validation
 - nodemon - Development server
 
-## Development
 
-To run the server in development mode with auto-reload:
-```bash
-npm start
-```
-
-## Error Handling
-
-The application includes comprehensive error handling for:
-- Invalid requests
-- Authentication errors
-- Database errors
-- File upload errors
-- Validation errors
-
-## Security Features
-
-- Password hashing
-- JWT-based authentication
-- Input validation
-- File upload restrictions
-- CORS configuration
