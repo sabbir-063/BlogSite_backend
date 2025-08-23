@@ -1,6 +1,7 @@
 const { User } = require("../Models/userSchema");
 const { Post } = require("../Models/Post");
 const bcrypt = require("bcrypt");
+const { deleteImage } = require("../utils/cloudinary");
 
 const getUserProfile = async (req, res) => {
     try {
@@ -61,6 +62,22 @@ const updateProfile = async (req, res) => {
         if (datathOfBirth) updateData.datathOfBirth = datathOfBirth;
         if (username) updateData.username = username;
         if (profilePicture) updateData.profilePicture = profilePicture;
+
+        // Handle Cloudinary profile image
+        if (req.cloudinaryProfile) {
+            updateData.profileImage = req.cloudinaryProfile;
+            updateData.profilePicture = req.cloudinaryProfile.url;
+            
+            // Delete old profile image from Cloudinary if exists
+            const currentUser = await User.findById(req.user.id);
+            if (currentUser.profileImage && currentUser.profileImage.public_id) {
+                try {
+                    await deleteImage(currentUser.profileImage.public_id);
+                } catch (deleteError) {
+                    console.error("Error deleting old profile image:", deleteError);
+                }
+            }
+        }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,

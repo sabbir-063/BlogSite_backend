@@ -1,6 +1,7 @@
-const {User} = require("../Models/userSchema");
+const { User } = require("../Models/userSchema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { deleteImage } = require("../utils/cloudinary");
 
 const registerUser = async (req, res) => {
     try {
@@ -9,21 +10,39 @@ const registerUser = async (req, res) => {
         });
         if (user) return res.status(400).send("User already registered");
 
-        const profilePicURL = req.file
-            ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-            : undefined;
+        // Handle Cloudinary profile image
+        let profilePicture = req.body.profilePicture; // Default fallback
+        let profileImage = null;
 
-        console.log("Profile Picture URL: ", profilePicURL);
-        console.log("Request Body : ", req.body);
+        if (req.cloudinaryProfile) {
+            profileImage = req.cloudinaryProfile;
+            profilePicture = req.cloudinaryProfile.url;
+        }
+
+        // console.log("Profile Picture URL: ", profilePicture);
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
-        await new User({
+
+        const newUser = await new User({
             ...req.body,
-            profilePicture: profilePicURL || req.body.profilePicture,
+            profilePicture: profilePicture,
+            profileImage: profileImage,
             password: hashedPassword
         }).save();
-        res.status(201).send("User created successfully");
+
+        res.status(201).json({
+            message: "User created successfully",
+            user: {
+                id: newUser._id,
+                firstname: newUser.firstname,
+                lastname: newUser.lastname,
+                username: newUser.username,
+                email: newUser.email,
+                profilePicture: newUser.profilePicture,
+                role: newUser.role
+            }
+        });
     } catch (err) {
         // Handle duplicate error
         if (err.code === 11000) {
@@ -56,6 +75,7 @@ const loginUser = async (req, res) => {
                 lastname: user.lastname,
                 datathOfBirth: user.datathOfBirth,
                 profilePicture: user.profilePicture,
+                profileImage: user.profileImage,
                 username: user.username,
                 email: user.email,
                 role: "author"
@@ -72,13 +92,26 @@ const updateUser = async (req, res) => {
         if (!user) return res.status(404).json("User not found");
         const updatedData = { ...req.body };
 
-        if (req.file) {
-            updatedData.profilePicture = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        // Handle Cloudinary profile image
+        if (req.cloudinaryProfile) {
+            updatedData.profileImage = req.cloudinaryProfile;
+            updatedData.profilePicture = req.cloudinaryProfile.url;
+
+            // Delete old profile image from Cloudinary if exists
+            if (user.profileImage && user.profileImage.public_id) {
+                try {
+                    await deleteImage(user.profileImage.public_id);
+                } catch (deleteError) {
+                    console.error("Error deleting old profile image:", deleteError);
+                }
+            }
         }
+
         if (req.body.password) {
             const salt = await bcrypt.genSalt(10);
             updatedData.password = await bcrypt.hash(req.body.password, salt);
         }
+
         const updatedUser = await User.findByIdAndUpdate(req.user.id, updatedData, { new: true });
         res.json({
             message: "User updated successfully",
@@ -95,12 +128,12 @@ const updateUser = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
-    }   
+    }
 }
 
 
 module.exports = {
-    registerUser,  
+    registerUser,
     loginUser,
     updateUser,
 };
