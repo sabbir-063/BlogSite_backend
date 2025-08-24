@@ -24,7 +24,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["admin", "author", "reader"],
         default: "reader"
-    }
+    },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
