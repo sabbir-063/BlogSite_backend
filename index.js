@@ -7,6 +7,7 @@ const { dbConnect } = require("./DB/dbConnect");
 const authRoutes = require("./Routes/authRoutes");
 const postRoutes = require("./Routes/postRoutes");
 const userRoutes = require('./Routes/userRoutes');
+const contactRoutes = require('./Routes/contactRoutes');
 // Database connection
 dbConnect();
 corsOptions = {
@@ -23,7 +24,9 @@ app.use(express.json());
 // Routes setup
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
+
 app.use('/api/user', userRoutes);
+app.use('/api/contact', contactRoutes);
 
 
 
