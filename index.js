@@ -10,8 +10,7 @@ const userRoutes = require('./Routes/userRoutes');
 // Database connection
 dbConnect();
 corsOptions = {
-    // origin: "http://localhost:5173",
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: "*",
     credentials: true,
 };
 app.use(cors(corsOptions));
