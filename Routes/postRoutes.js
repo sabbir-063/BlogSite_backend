@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     createPost,
     getAllPosts,
+    searchPosts,
     getPostById,
     updatePost,
     deletePost,
@@ -17,6 +18,7 @@ const { upload, uploadToCloudinary } = require("../Middleware/cloudinaryUpload")
 // Post CRUD routes
 router.post("/create", verifyToken, upload.array("imageLinks"), uploadToCloudinary, createPost);
 router.get("/all", getAllPosts);
+router.get('/search', searchPosts);
 router.get('/:id', getPostById);
 router.put("/:id", verifyToken, upload.array("imageLinks"), uploadToCloudinary, updatePost);
 router.delete("/:id", verifyToken, deletePost);

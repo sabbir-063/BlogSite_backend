@@ -45,7 +45,8 @@ const postSchema = new mongoose.Schema({
     viewCount: {
         type: Number,
         default: 0
-    }
+    },
+    tags: [{ type: String, trim: true }] // Added tags for better filtering
 },
     { timestamps: true });
 
@@ -62,6 +63,9 @@ postSchema.virtual('commentCount').get(function () {
 // Ensure virtuals are serialized
 postSchema.set('toJSON', { virtuals: true });
 postSchema.set('toObject', { virtuals: true });
+
+// Create text index for search functionality
+postSchema.index({ title: 'text', content: 'text', tags: 'text' });
 
 const Post = mongoose.model("Post", postSchema);
 

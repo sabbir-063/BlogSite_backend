@@ -42,13 +42,53 @@ const createPost = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
     try {
+        // Extract query parameters for sorting and pagination
+        const { sort = 'latest', page = 1, limit = 10 } = req.query;
+        const skip = (page - 1) * limit;
+
+        // Define sort options
+        let sortOption = {};
+        switch (sort) {
+            case 'oldest':
+                sortOption = { createdAt: 1 };
+                break;
+            case 'most_viewed':
+                sortOption = { viewCount: -1 };
+                break;
+            case 'most_liked':
+                sortOption = { likeCount: -1 };
+                break;
+            case 'most_commented':
+                sortOption = { commentCount: -1 };
+                break;
+            case 'latest':
+            default:
+                sortOption = { createdAt: -1 };
+        }
+
+        // Get total count for pagination info
+        const total = await Post.countDocuments();
+
+        // Fetch posts with sorting and pagination
         const posts = await Post.find()
             .populate("author", "firstname lastname username role profilePicture profileImage")
             .populate("comments.user", "firstname lastname username profilePicture profileImage")
-            .sort({ createdAt: -1 });
-        // console.log("Fetched posts: ", posts);
-        res.json(posts);
+            .sort(sortOption)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        // Add pagination metadata
+        res.json({
+            posts,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (err) {
+        console.error("Error fetching posts:", err);
         res.status(500).json({ error: "Failed to fetch posts" });
     }
 };
@@ -339,6 +379,92 @@ const toggleCommentLike = async (req, res) => {
     }
 };
 
+// Search posts
+const searchPosts = async (req, res) => {
+    try {
+        const { query, author, tags, sort = 'latest', page = 1, limit = 10 } = req.query;
+        const skip = (page - 1) * limit;
+
+        // Build search query
+        let searchQuery = {};
+
+        // Text search if query parameter exists
+        if (query) {
+            searchQuery.$text = { $search: query };
+        }
+
+        // Filter by author if provided
+        if (author) {
+            searchQuery.author = author;
+        }
+
+        // Filter by tags if provided
+        if (tags) {
+            const tagArray = tags.split(',').map(tag => tag.trim());
+            searchQuery.tags = { $in: tagArray };
+        }
+
+        // Define sort options
+        let sortOption = {};
+        switch (sort) {
+            case 'oldest':
+                sortOption = { createdAt: 1 };
+                break;
+            case 'most_viewed':
+                sortOption = { viewCount: -1 };
+                break;
+            case 'most_liked':
+                sortOption = { likeCount: -1 };
+                break;
+            case 'most_commented':
+                sortOption = { commentCount: -1 };
+                break;
+            case 'relevance':
+                if (query) {
+                    // If doing text search, sort by text score for relevance
+                    sortOption = { score: { $meta: 'textScore' } };
+                } else {
+                    sortOption = { createdAt: -1 };
+                }
+                break;
+            case 'latest':
+            default:
+                sortOption = { createdAt: -1 };
+        }
+
+        // Get total count for pagination
+        const total = await Post.countDocuments(searchQuery);
+
+        // Find posts with pagination
+        let postsQuery = Post.find(searchQuery);
+
+        // Add text score projection if doing text search
+        if (query) {
+            postsQuery = postsQuery.select({ score: { $meta: 'textScore' } });
+        }
+
+        const posts = await postsQuery
+            .populate("author", "firstname lastname username role profilePicture profileImage")
+            .populate("comments.user", "firstname lastname username profilePicture profileImage")
+            .sort(sortOption)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        res.json({
+            posts,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (err) {
+        console.error("Error searching posts:", err);
+        res.status(500).json({ error: "Failed to search posts" });
+    }
+};
+
 module.exports = {
     createPost,
     getAllPosts,
@@ -348,5 +474,6 @@ module.exports = {
     toggleLike,
     addComment,
     deleteComment,
-    toggleCommentLike
+    toggleCommentLike,
+    searchPosts
 };
