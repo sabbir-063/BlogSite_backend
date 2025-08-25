@@ -43,9 +43,9 @@ const createPost = async (req, res) => {
 const getAllPosts = async (req, res) => {
     try {
         // Extract query parameters for sorting and pagination
-        const { sort = 'latest', page = 1, limit = 10 } = req.query;
+        const { sort = 'latest', page = 1, limit = 12 } = req.query;
         const skip = (page - 1) * limit;
-
+        
         // Define sort options
         let sortOption = {};
         switch (sort) {
@@ -68,7 +68,7 @@ const getAllPosts = async (req, res) => {
 
         // Get total count for pagination info
         const total = await Post.countDocuments();
-
+        
         // Fetch posts with sorting and pagination
         const posts = await Post.find()
             .populate("author", "firstname lastname username role profilePicture profileImage")
@@ -76,7 +76,7 @@ const getAllPosts = async (req, res) => {
             .sort(sortOption)
             .skip(skip)
             .limit(parseInt(limit));
-
+        
         // Add pagination metadata
         res.json({
             posts,
@@ -384,26 +384,26 @@ const searchPosts = async (req, res) => {
     try {
         const { query, author, tags, sort = 'latest', page = 1, limit = 10 } = req.query;
         const skip = (page - 1) * limit;
-
+        
         // Build search query
         let searchQuery = {};
-
+        
         // Text search if query parameter exists
         if (query) {
             searchQuery.$text = { $search: query };
         }
-
+        
         // Filter by author if provided
         if (author) {
             searchQuery.author = author;
         }
-
+        
         // Filter by tags if provided
         if (tags) {
             const tagArray = tags.split(',').map(tag => tag.trim());
             searchQuery.tags = { $in: tagArray };
         }
-
+        
         // Define sort options
         let sortOption = {};
         switch (sort) {
@@ -431,25 +431,25 @@ const searchPosts = async (req, res) => {
             default:
                 sortOption = { createdAt: -1 };
         }
-
+        
         // Get total count for pagination
         const total = await Post.countDocuments(searchQuery);
-
+        
         // Find posts with pagination
         let postsQuery = Post.find(searchQuery);
-
+        
         // Add text score projection if doing text search
         if (query) {
             postsQuery = postsQuery.select({ score: { $meta: 'textScore' } });
         }
-
+        
         const posts = await postsQuery
             .populate("author", "firstname lastname username role profilePicture profileImage")
             .populate("comments.user", "firstname lastname username profilePicture profileImage")
             .sort(sortOption)
             .skip(skip)
             .limit(parseInt(limit));
-
+        
         res.json({
             posts,
             pagination: {
