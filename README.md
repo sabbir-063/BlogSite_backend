@@ -23,25 +23,32 @@ JWT_SECRET=your_jwt_secret_key
 ```
 backend/
 ├── Controllers/
-│   ├── authController.js    # Authentication related controllers
-│   ├── postController.js    # Blog post related controllers
-│   └── userController.js    # User profile related controllers
+│   ├── authController.js      # Authentication related controllers
+│   ├── contactController.js   # Contact form controllers
+│   ├── passwordController.js  # Password reset/recovery controllers
+│   ├── postController.js      # Blog post related controllers
+│   └── userController.js      # User profile related controllers
 ├── DB/
-│   └── dbConnect.js         # Database connection configuration
+│   └── dbConnect.js           # Database connection configuration
 ├── Middleware/
-│   ├── authMiddleware.js    # JWT authentication middleware
-│   ├── postImageUpload.js   # Image upload middleware for posts
-│   └── upload.js           # General file upload configuration
+│   ├── authMiddleware.js      # JWT authentication middleware
+│   ├── cloudinaryUpload.js    # Cloudinary integration for image storage
+│   ├── postImageUpload.js     # Image upload middleware for posts
+│   └── upload.js             # General file upload configuration
 ├── Models/
-│   ├── Post.js             # Blog post schema
-│   └── userSchema.js       # User schema
+│   ├── Post.js               # Blog post schema with text indexing
+│   └── userSchema.js         # User schema
 ├── Routes/
-│   ├── authRoutes.js       # Authentication routes
-│   ├── postRoutes.js       # Blog post routes
-│   └── userRoutes.js       # User profile routes
-├── uploads/                # Directory for uploaded files
-├── index.js               # Server entry point
-└── package.json          # Project dependencies and scripts
+│   ├── authRoutes.js         # Authentication routes
+│   ├── contactRoutes.js      # Contact form routes
+│   ├── postRoutes.js         # Blog post routes
+│   └── userRoutes.js         # User profile routes
+├── utils/
+│   └── cloudinary.js         # Cloudinary configuration
+├── uploads/                  # Directory for uploaded files
+│   └── post-images/          # Blog post images
+├── index.js                 # Server entry point
+└── package.json            # Project dependencies and scripts
 ```
 
 ## Features
@@ -52,6 +59,12 @@ backend/
 - Image upload functionality
 - User profile management
 - Password hashing using bcrypt
+- Advanced search functionality with MongoDB text indexes
+- Post sorting by date, views, and likes
+- Post filtering by tags and categories
+- Pagination for optimized performance
+- Post engagement tracking (views, likes)
+- Markdown content support
 
 ## API Endpoints
 
@@ -61,11 +74,14 @@ backend/
 - POST `/api/auth/logout` - Logout user
 
 ### Blog Posts
-- GET `/api/posts` - Get all posts
+- GET `/api/posts` - Get all posts with sorting, filtering, and pagination
+- GET `/api/posts/search` - Search posts by title, content, or tags
 - GET `/api/posts/:id` - Get single post
-- POST `/api/posts` - Create new post
+- POST `/api/posts` - Create new post with Markdown content
 - PUT `/api/posts/:id` - Update post
 - DELETE `/api/posts/:id` - Delete post
+- POST `/api/posts/:id/like` - Like/unlike a post
+- POST `/api/posts/:id/comment` - Add comment to post
 
 ### User Profile
 - GET `/api/user/profile` - Get user profile
@@ -100,8 +116,20 @@ The server will start on the configured port (default: 8080)
 - bcrypt - Password hashing
 - jsonwebtoken - JWT implementation
 - multer - File upload handling
+- cloudinary - Cloud storage for images
 - cors - Cross-origin resource sharing
 - dotenv - Environment variable management
 - nodemon - Development server
+- express-validator - Input validation
+
+## Search and Filter Features
+
+The backend now supports advanced search and filtering capabilities:
+- Full-text search across post title, content and tags
+- MongoDB text indexes for efficient searching
+- Multiple sort options (newest, oldest, most viewed, most liked)
+- Filtering by post tags or categories
+- Pagination with customizable limit and page parameters
+- Combined filters for complex queries
 
 
