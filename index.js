@@ -12,7 +12,6 @@ const contactRoutes = require('./Routes/contactRoutes');
 dbConnect();
 corsOptions = {
     origin: "*",
-    credentials: true,
 };
 app.use(cors(corsOptions));
 
@@ -23,6 +22,7 @@ app.use(express.json());
 
 // Routes setup
 app.use("/api/auth", authRoutes);
+
 app.use("/api/posts", postRoutes);
 
 app.use('/api/user', userRoutes);
